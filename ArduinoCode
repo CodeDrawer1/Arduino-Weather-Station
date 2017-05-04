@@ -1,0 +1,101 @@
+int DHTPower = 7;  //The power supply for the DHT
+int BPMPower = 6;  //The power supply for the BPM
+
+#include <SD.h>    //Includes SD library
+#include <Wire.h>  //Includes wire library for the BPM
+#include <Adafruit_BMP085.h> //Includes BPM library
+
+#include "DHT.h" //Include the DHT library
+#define DHTPIN 8     // the pin the DHT is connected to
+
+// Uncomment whatever type you're using!
+//#define DHTTYPE DHT11   // DHT 11
+#define DHTTYPE DHT22   // DHT 22  (AM2302), AM2321
+//#define DHTTYPE DHT21   // DHT 21 (AM2301)
+// Initialize DHT sensor.
+// Note that older versions of this library took an optional third parameter to
+// tweak the timings for faster processors.  This parameter is no longer needed
+// as the current DHT reading algorithm adjusts itself to work on faster procs.
+DHT dht(DHTPIN, DHTTYPE); // Make a dht object out of the pin the DHT is connected to, and the type of DHT it is.
+Adafruit_BMP085 bmp;    // makes a bpm object with the library
+const int chipSelect = 4; //The chipselect for the SD logger
+
+void setup() {
+  
+  pinMode(10, OUTPUT); // The SD library likes this as an output, it is the default chipselect but it likes this as an output anyways.
+   
+   
+  //On an arduino uno these are analogwrite able 
+  pinMode(DHTPower,OUTPUT); //sets the dht power supply pin as an output
+  pinMode(BPMPower,OUTPUT); //sets the bpm power supple as an output.
+  
+  Serial.begin(9600);        //starts serial port. I don't really use it, but for testing purposes I turn it on.
+  Serial.println("Program test!"); //just a message
+  dht.begin();                     //begin the dht library
+  if (!bmp.begin()) { //this begins the bpm sensor and if it doesn't work, display the following messsage
+	Serial.println("Could not find a valid BMP085 sensor, check wiring!");
+	while (1) {}
+  }
+  //the following two commands set the output to low so the sensors are off. 
+  digitalWrite(DHTPower, LOW);  
+  digitalWrite(BPMPower, LOW);
+  
+  //wait a second or 1000 miliseconds
+  delay(1000);
+}
+
+void loop(){
+  //lets the file stay closed so the signal can settle.
+  delay(10);
+  File weather = SD.open("weatherdata.txt", FILE_WRITE); //Make a file, and to acess it, it is under weather and it opens the weather data file and logs data there.
+  // Wait a few seconds between measurements.
+  digitalWrite(DHTPower, HIGH);  //sends five volts to the DHT
+  delay(2000);  //wait two seconds to get the dht to initalise
+  // Reading temperature or humidity takes about 250 milliseconds!
+  // Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
+  float h = dht.readHumidity();
+  // Read temperature as Celsius (the default)
+  float t = dht.readTemperature(true);
+  // Read temperature as Fahrenheit (isFahrenheit = true)
+  float f = dht.readTemperature();
+
+  // Check if any reads failed and exit early (to try again).
+  if (isnan(h) || isnan(t) || isnan(f)) {
+    weather.println("Failed to read from DHT sensor!");
+    return;
+  }
+
+  // Compute heat index in Fahrenheit (the default)
+  float hif = dht.computeHeatIndex(f, h);
+  // Compute heat index in Celsius (isFahreheit = false)
+  float hic = dht.computeHeatIndex(t, h, false);
+
+  //prints the data to the SD card! :)
+  weather.print(h);
+  weather.print(",");
+  weather.print(t);
+  weather.print(",");
+  weather.print(f);
+  weather.print(",");
+  weather.print(hic);
+  weather.print(",");
+  weather.print(hif);
+  weather.print(",");
+  weather.print(",");
+  weather.print(",");
+  //turns off the DHT and supplies 3.3v to the BPM
+  digitalWrite(DHTPower, LOW);
+  digitalWrite(BPMPower, 168);
+  
+  delay(500);
+  //read tempature and pressure and log it
+    weather.print(bmp.readTemperature());
+    weather.print(bmp.readPressure());
+    
+    weather.println();
+    delay(100);
+    //turn off bpm 
+   digitalWrite(BPMPower, LOW);
+   //close the weather file to be opened agian.  
+   weather.close();
+}
