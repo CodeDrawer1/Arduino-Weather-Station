@@ -1,0 +1,16 @@
+This is for an arduino uno.
+The DHT's red wire is connected to pin 7
+The gold wire is connected to pin 8
+the black wire goes to GND
+The BPM's VCC goes to pin 6
+The BPM's GND to ground
+The BPM's SCL to A5
+The BPM's SDA to A4
+The two others are not used
+The SD logger's MOSI to pin 11
+The SD logger's MISO to pin 12
+The SD logger's CLK to pin 13
+The SD logger's CS to pin 4
+The SD logger's 3.3v to 3.3v
+The SD logger's GND to ground 
+DO NOT USE THE PIN 10 FOR ANY PURPOSES!
